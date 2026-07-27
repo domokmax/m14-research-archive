@@ -1,4 +1,4 @@
-const state = { reports: [], filtered: [], date: "all", type: "all", query: "", index: 0 };
+const state = { reports: [], filtered: [], date: "all", type: "all", query: "", index: 0, mode: "single" };
 const $ = (id) => document.getElementById(id);
 
 function escapeHtml(value = "") {
@@ -66,6 +66,24 @@ function renderFilters() {
   $("dateList").querySelectorAll("button").forEach(btn => btn.onclick = () => { state.date = btn.dataset.date; state.index = 0; applyFilters(); });
 }
 
+function renderArchiveSelectors() {
+  const dates = uniqueDates();
+  $("dateSelect").innerHTML =
+    `<option value="all">全部日期</option>` +
+    dates.map(date => `<option value="${date}">${date}</option>`).join("");
+  $("dateSelect").value = state.date;
+
+  $("timeSelect").innerHTML = state.filtered.map((report, index) => {
+    const time = String(report.createdAt || "").replace("T", " ").slice(0, 16);
+    const shortTitle = String(report.title || "未命名研报").slice(0, 30);
+    return `<option value="${index}">${escapeHtml(time)} · ${escapeHtml(shortTitle)}</option>`;
+  }).join("");
+  $("timeSelect").disabled = !state.filtered.length || state.mode === "continuous";
+  if (state.filtered.length) $("timeSelect").value = String(state.index);
+  $("singleMode").classList.toggle("active", state.mode === "single");
+  $("continuousMode").classList.toggle("active", state.mode === "continuous");
+}
+
 function renderReportList() {
   $("resultCount").textContent = state.filtered.length;
   $("reportList").innerHTML = state.filtered.map((report, index) => {
@@ -77,6 +95,7 @@ function renderReportList() {
   }).join("");
   $("reportList").querySelectorAll("button").forEach(button => {
     button.onclick = () => {
+      state.mode = "single";
       state.index = Number(button.dataset.index);
       renderReport();
     };
@@ -91,24 +110,16 @@ function applyFilters() {
     (!q || [r.title, r.content, ...(r.tags || [])].join(" ").toLowerCase().includes(q))
   );
   state.index = Math.min(state.index, Math.max(0, state.filtered.length - 1));
-  $("activeDate").textContent = state.date === "all" ? "全部日期" : state.date;
   renderFilters();
+  renderArchiveSelectors();
   renderReportList();
   renderReport();
 }
 
-function renderReport() {
-  const report = state.filtered[state.index];
-  $("position").textContent = report ? `${state.index + 1} / ${state.filtered.length}` : "0 / 0";
-  $("prevReport").disabled = state.index <= 0;
-  $("nextReport").disabled = state.index >= state.filtered.length - 1;
-  renderReportList();
-  if (!report) {
-    $("report").innerHTML = '<p class="empty">没有符合当前条件的研报。</p>';
-    return;
-  }
+function reportMarkup(report, continuous = false) {
   const tags = (report.tags || []).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join("");
-  $("report").innerHTML = `
+  return `<article class="report-card">
+    ${continuous ? `<div class="continuous-label">档案日期 ${escapeHtml(report.archiveDate || "—")}</div>` : ""}
     <header class="report-head">
       <h2>${escapeHtml(report.title || "未命名研报")}</h2>
       <div class="meta">
@@ -118,7 +129,30 @@ function renderReport() {
       </div>
       <div class="tags">${tags}</div>
     </header>
-    <div class="markdown">${markdown(report.content)}</div>`;
+    <div class="markdown">${markdown(report.content)}</div>
+  </article>`;
+}
+
+function renderReport() {
+  const report = state.filtered[state.index];
+  $("position").textContent = report ? `${state.index + 1} / ${state.filtered.length}` : "0 / 0";
+  $("prevReport").disabled = state.mode === "continuous" || state.index <= 0;
+  $("nextReport").disabled = state.mode === "continuous" || state.index >= state.filtered.length - 1;
+  renderArchiveSelectors();
+  renderReportList();
+  if (!report) {
+    $("report").innerHTML = '<p class="empty">没有符合当前条件的研报。</p>';
+    return;
+  }
+  if (state.mode === "continuous") {
+    if (state.date === "all") {
+      $("report").innerHTML = '<p class="empty">请先选择一个档案日期，再使用“当日全部展开”。</p>';
+      return;
+    }
+    $("report").innerHTML = state.filtered.map(item => reportMarkup(item, true)).join("");
+  } else {
+    $("report").innerHTML = reportMarkup(report);
+  }
   window.scrollTo({ top: document.querySelector(".reading-room").offsetTop - 14, behavior: "smooth" });
 }
 
@@ -142,6 +176,19 @@ $("searchInput").addEventListener("input", (event) => { state.query = event.targ
 $("prevReport").onclick = () => { if (state.index > 0) { state.index--; renderReport(); } };
 $("nextReport").onclick = () => { if (state.index < state.filtered.length - 1) { state.index++; renderReport(); } };
 $("railToggle").onclick = () => $("dateList").closest(".archive-rail").classList.toggle("collapsed");
+$("dateSelect").onchange = event => { state.date = event.target.value; state.index = 0; applyFilters(); };
+$("timeSelect").onchange = event => { state.index = Number(event.target.value); renderReport(); };
+$("singleMode").onclick = () => { state.mode = "single"; renderReport(); };
+$("continuousMode").onclick = () => {
+  state.mode = "continuous";
+  if (state.date === "all" && uniqueDates().length) {
+    state.date = uniqueDates()[0];
+    state.index = 0;
+    applyFilters();
+  } else {
+    renderReport();
+  }
+};
 let readerSize = 16;
 function setReaderSize(size) {
   readerSize = Math.max(14, Math.min(20, size));

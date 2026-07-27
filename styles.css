@@ -154,7 +154,31 @@ h1 {
   background: rgba(245,241,232,.94);
   backdrop-filter: blur(10px);
 }
-.reading-toolbar strong { font-size: 19px; }
+.archive-selectors { display: flex; align-items: end; gap: 10px; min-width: 0; }
+.archive-selectors label { display: grid; gap: 4px; }
+.archive-selectors select {
+  min-width: 145px;
+  max-width: 240px;
+  height: 34px;
+  padding: 0 28px 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--sheet);
+  color: var(--ink);
+  font: 12px "Microsoft YaHei UI", sans-serif;
+}
+.view-mode { display: flex; }
+.view-mode button {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-right: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.view-mode button:last-child { border-right: 1px solid var(--line); }
+.view-mode button.active { border-color: var(--pine); background: var(--pine); color: white; }
 .pager { display: flex; align-items: center; gap: 10px; font: 12px "Microsoft YaHei UI", sans-serif; color: var(--muted); }
 .pager button { padding: 7px 11px; }
 .pager button:disabled { opacity: .35; cursor: not-allowed; }
@@ -168,6 +192,12 @@ h1 {
   border: 1px solid var(--line);
   background: var(--sheet);
   box-shadow: var(--shadow);
+}
+.report-card + .report-card { margin-top: 22px; }
+.continuous-label {
+  margin: 4px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
 }
 .report-head { padding-bottom: 18px; margin-bottom: 24px; border-bottom: 3px double var(--line); }
 .report-head h2 {
@@ -223,7 +253,11 @@ footer { padding: 18px; border-top: 1px solid var(--line); text-align: center; c
   .layout { display: block; padding: 18px 12px 50px; }
   .archive-rail { position: relative; top: 0; width: 100%; max-height: none; margin-bottom: 18px; }
   .archive-rail.collapsed { width: 100%; }
-  .reading-toolbar { top: 0; align-items: center; }
+  .reading-toolbar { position: relative; display: grid; top: 0; align-items: center; }
+  .archive-selectors { display: grid; grid-template-columns: 1fr 1fr; }
+  .archive-selectors select { width: 100%; min-width: 0; }
+  .view-mode { grid-column: 1 / -1; }
+  .view-mode button { flex: 1; }
   .reading-controls { display: none; }
   .pager { gap: 5px; }
   .pager button { padding: 6px 8px; }
