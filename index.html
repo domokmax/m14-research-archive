@@ -33,6 +33,9 @@
       </label>
       <div id="typeFilters" class="type-filters"></div>
       <nav id="dateList" class="date-list"></nav>
+      <div class="rail-divider"></div>
+      <div class="report-index-head">当前结果 <span id="resultCount">0</span></div>
+      <nav id="reportList" class="report-list"></nav>
     </aside>
 
     <section class="reading-room">
@@ -42,6 +45,11 @@
           <strong id="activeDate">全部日期</strong>
         </div>
         <div class="pager">
+          <div class="reading-controls" aria-label="正文大小">
+            <button id="fontDown" type="button" title="缩小正文">A−</button>
+            <button id="fontReset" type="button" title="恢复默认">A</button>
+            <button id="fontUp" type="button" title="放大正文">A+</button>
+          </div>
           <button id="prevReport" type="button">上一篇</button>
           <span id="position">— / —</span>
           <button id="nextReport" type="button">下一篇</button>

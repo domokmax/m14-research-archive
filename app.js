@@ -66,6 +66,23 @@ function renderFilters() {
   $("dateList").querySelectorAll("button").forEach(btn => btn.onclick = () => { state.date = btn.dataset.date; state.index = 0; applyFilters(); });
 }
 
+function renderReportList() {
+  $("resultCount").textContent = state.filtered.length;
+  $("reportList").innerHTML = state.filtered.map((report, index) => {
+    const time = String(report.createdAt || "").replace("T", " ").slice(0, 16);
+    return `<button data-index="${index}" class="${state.index === index ? "active" : ""}">
+      <strong>${escapeHtml(report.title || "未命名研报")}</strong>
+      <small>${escapeHtml(time)} · ${escapeHtml(typeLabel(report.recordType))}</small>
+    </button>`;
+  }).join("");
+  $("reportList").querySelectorAll("button").forEach(button => {
+    button.onclick = () => {
+      state.index = Number(button.dataset.index);
+      renderReport();
+    };
+  });
+}
+
 function applyFilters() {
   const q = state.query.toLowerCase();
   state.filtered = state.reports.filter(r =>
@@ -76,6 +93,7 @@ function applyFilters() {
   state.index = Math.min(state.index, Math.max(0, state.filtered.length - 1));
   $("activeDate").textContent = state.date === "all" ? "全部日期" : state.date;
   renderFilters();
+  renderReportList();
   renderReport();
 }
 
@@ -84,6 +102,7 @@ function renderReport() {
   $("position").textContent = report ? `${state.index + 1} / ${state.filtered.length}` : "0 / 0";
   $("prevReport").disabled = state.index <= 0;
   $("nextReport").disabled = state.index >= state.filtered.length - 1;
+  renderReportList();
   if (!report) {
     $("report").innerHTML = '<p class="empty">没有符合当前条件的研报。</p>';
     return;
@@ -123,4 +142,14 @@ $("searchInput").addEventListener("input", (event) => { state.query = event.targ
 $("prevReport").onclick = () => { if (state.index > 0) { state.index--; renderReport(); } };
 $("nextReport").onclick = () => { if (state.index < state.filtered.length - 1) { state.index++; renderReport(); } };
 $("railToggle").onclick = () => $("dateList").closest(".archive-rail").classList.toggle("collapsed");
+let readerSize = 16;
+function setReaderSize(size) {
+  readerSize = Math.max(14, Math.min(20, size));
+  $("report").style.setProperty("--reader-size", `${readerSize}px`);
+  localStorage.setItem("m14-reader-size", String(readerSize));
+}
+$("fontDown").onclick = () => setReaderSize(readerSize - 1);
+$("fontUp").onclick = () => setReaderSize(readerSize + 1);
+$("fontReset").onclick = () => setReaderSize(16);
+setReaderSize(Number(localStorage.getItem("m14-reader-size")) || 16);
 boot();
